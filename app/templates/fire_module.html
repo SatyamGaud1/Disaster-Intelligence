@@ -1,0 +1,249 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="dashboard-grid">
+    <!-- Row 1: Fire Specific KPI Cards -->
+    <div class="metrics-row">
+        <div class="card metric-card alert-card">
+            <div class="metric-header">
+                <span class="metric-title">Clustered Wildfire Incidents</span>
+                <span class="badge badge-danger">DBSCAN Clustered</span>
+            </div>
+            <div class="metric-body">
+                <span class="metric-value danger-text" id="fire-clusters-count">--</span>
+                <span class="metric-change">Contiguous Fire Fronts</span>
+            </div>
+            <div class="metric-footer">
+                <span class="metric-sublabel">Spatial radius: ~8 km</span>
+            </div>
+        </div>
+
+        <div class="card metric-card">
+            <div class="metric-header">
+                <span class="metric-title">Active Hotspot Detections</span>
+                <span class="badge badge-warning">VIIRS 375m</span>
+            </div>
+            <div class="metric-body">
+                <span class="metric-value" id="fire-hotspots-count">--</span>
+                <span class="metric-change">Thermal Sensor Pixels</span>
+            </div>
+            <div class="metric-footer">
+                <span class="metric-sublabel">NASA FIRMS Ingestion</span>
+            </div>
+        </div>
+
+        <div class="card metric-card">
+            <div class="metric-header">
+                <span class="metric-title">Peak Radiative Power</span>
+                <span class="badge badge-primary">FRP Metric</span>
+            </div>
+            <div class="metric-body">
+                <span class="metric-value" id="fire-peak-frp">-- MW</span>
+                <span class="metric-change">Max Thermal Output</span>
+            </div>
+            <div class="metric-footer">
+                <span class="metric-sublabel">Direct energy release rate</span>
+            </div>
+        </div>
+
+        <div class="card metric-card">
+            <div class="metric-header">
+                <span class="metric-title">Nighttime Persistence</span>
+                <span class="badge badge-neutral">Nocturnal Burn</span>
+            </div>
+            <div class="metric-body">
+                <span class="metric-value" id="fire-night-count">--</span>
+                <span class="metric-change">Active Night Pixels</span>
+            </div>
+            <div class="metric-footer">
+                <span class="metric-sublabel">High fuel dryness indicator</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Row 2: Wildfire Incident Map -->
+    <div class="card map-card">
+        <div class="card-header flex-between">
+            <div class="header-group">
+                <h3 class="card-title">NASA FIRMS Thermal Incident Map</h3>
+                <span class="card-subtitle">Real satellite detections with DBSCAN geospatial clustering</span>
+            </div>
+            <div class="map-controls">
+                <div class="button-group">
+                    <button class="filter-btn active" id="view-fire-clusters-btn">Incident Clusters</button>
+                    <button class="filter-btn" id="view-raw-hotspots-btn">Raw VIIRS Pixels</button>
+                </div>
+                <button class="btn btn-outline" id="sync-firms-now-btn" style="margin-left: 10px;">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/></svg>
+                    <span>Sync NASA FIRMS</span>
+                </button>
+            </div>
+        </div>
+        <div class="card-body map-wrapper">
+            <div id="disaster-map" class="map-container"></div>
+            
+            <div class="map-legend">
+                <div class="legend-header">Fire Intensity (FRP)</div>
+                <div class="legend-item"><span class="legend-color fire" style="background:#ff4d4f;"></span> &gt; 80 MW (Critical Front)</div>
+                <div class="legend-item"><span class="legend-color fire" style="background:#faad14;"></span> 40 - 80 MW (High Intensity)</div>
+                <div class="legend-item"><span class="legend-color fire" style="background:#fadb14;"></span> &lt; 40 MW (Moderate / Smoldering)</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Row 3: Transparent Priority Ranking & Evidence Breakdown -->
+    <div class="details-split-row">
+        <!-- Incidents List -->
+        <div class="card incidents-card">
+            <div class="card-header flex-between">
+                <div class="header-group">
+                    <h3 class="card-title">Prioritized Wildfire Complexes</h3>
+                    <span class="card-subtitle">Transparent mathematical scoring (40% FRP + 25% Conf + 20% Cluster + 15% Night)</span>
+                </div>
+                <span class="badge badge-danger" id="fire-active-badge">Active Fronts</span>
+            </div>
+            <div class="card-body table-responsive">
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>Incident UID</th>
+                            <th>Incident Title & Location</th>
+                            <th>Priority Score</th>
+                            <th>Peak / Mean FRP</th>
+                            <th>Area (sq km)</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody id="fire-incidents-table-body">
+                        <tr>
+                            <td colspan="6" class="table-loading">Querying active wildfire incidents...</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Methodology & Evidence Explanation Card -->
+        <div class="card pipeline-card">
+            <div class="card-header">
+                <h3 class="card-title">Scoring & Evidence Transparency</h3>
+                <span class="card-subtitle">Explainable Prioritization Methodology</span>
+            </div>
+            <div class="card-body" style="font-size: 0.82rem; color: var(--text-secondary); line-height: 1.6;">
+                <div style="margin-bottom: 16px;">
+                    <strong style="color: var(--text-primary); display:block; margin-bottom: 4px;">1. Intensity Metric (40%)</strong>
+                    Fire Radiative Power (FRP) measured in Megawatts. Directly quantifies biomass combustion rate and smoke emissions.
+                </div>
+                <div style="margin-bottom: 16px;">
+                    <strong style="color: var(--text-primary); display:block; margin-bottom: 4px;">2. Sensor Confidence (25%)</strong>
+                    Radiometric cloud filtering and glint rejection algorithm confidence from VIIRS / MODIS instruments.
+                </div>
+                <div style="margin-bottom: 16px;">
+                    <strong style="color: var(--text-primary); display:block; margin-bottom: 4px;">3. Spatial Density (20%)</strong>
+                    DBSCAN spatial clustering groups adjacent pixel detections within an 8 km search perimeter into coherent fire complexes.
+                </div>
+                <div>
+                    <strong style="color: var(--text-primary); display:block; margin-bottom: 4px;">4. Nighttime Persistence (15%)</strong>
+                    Active combustion detected during satellite night passes signals low fuel moisture and aggressive fire behavior.
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Row 4: AI Environmental Risk Simulator & Machine Learning Forecaster -->
+    <div class="card risk-prediction-section" style="margin-top: 24px;">
+        <div class="card-header flex-between">
+            <div class="header-group">
+                <h3 class="card-title">AI Environmental Fire Risk Simulator</h3>
+                <span class="card-subtitle">Random Forest Multi-Factor Model (Predicting Risk from Temperature, Humidity, Wind, Rain & Vegetation)</span>
+            </div>
+            <span class="badge badge-success">ML Model Validated</span>
+        </div>
+        <div class="card-body">
+            <div class="risk-grid-container">
+                <div class="card" style="background: rgba(0,0,0,0.2); border: 1px solid var(--border-subtle); padding: 16px;">
+                    <h4 style="font-size: 0.9rem; margin-bottom: 14px; color: var(--text-primary);">Interactive Weather & Canopy Conditions</h4>
+                    <form id="fire-risk-form" class="risk-simulator-form" onsubmit="return false;">
+                        <div class="risk-slider-item">
+                            <div class="risk-slider-header">
+                                <span>Temperature</span>
+                                <span class="risk-slider-val" id="val-temp">35.0 °C</span>
+                            </div>
+                            <input type="range" class="risk-range-slider" id="slider-temp" min="15.0" max="45.0" step="0.5" value="35.0">
+                        </div>
+
+                        <div class="risk-slider-item">
+                            <div class="risk-slider-header">
+                                <span>Relative Humidity</span>
+                                <span class="risk-slider-val" id="val-humidity">22.0 %</span>
+                            </div>
+                            <input type="range" class="risk-range-slider" id="slider-humidity" min="10.0" max="95.0" step="1.0" value="22.0">
+                        </div>
+
+                        <div class="risk-slider-item">
+                            <div class="risk-slider-header">
+                                <span>Wind Speed</span>
+                                <span class="risk-slider-val" id="val-wind">26.0 km/h</span>
+                            </div>
+                            <input type="range" class="risk-range-slider" id="slider-wind" min="5.0" max="50.0" step="1.0" value="26.0">
+                        </div>
+
+                        <div class="risk-slider-item">
+                            <div class="risk-slider-header">
+                                <span>24h Precipitation</span>
+                                <span class="risk-slider-val" id="val-rain">0.0 mm</span>
+                            </div>
+                            <input type="range" class="risk-range-slider" id="slider-rain" min="0.0" max="30.0" step="0.5" value="0.0">
+                        </div>
+
+                        <div class="risk-slider-item">
+                            <div class="risk-slider-header">
+                                <span>Vegetation Dryness (NDVI)</span>
+                                <span class="risk-slider-val" id="val-ndvi">0.200 (Dry Fuel)</span>
+                            </div>
+                            <input type="range" class="risk-range-slider" id="slider-ndvi" min="0.10" max="0.80" step="0.01" value="0.20">
+                        </div>
+                    </form>
+                </div>
+
+                <div class="risk-output-card" id="risk-output-card">
+                    <div class="risk-output-top">
+                        <div>
+                            <span style="font-size: 0.72rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; display: block; margin-bottom: 4px;">Predicted Wildfire Danger</span>
+                            <div class="risk-score-display" id="risk-score-display" style="color: #ef4444;">-- %</div>
+                        </div>
+                        <div class="risk-badge high" id="risk-category-badge">HIGH RISK</div>
+                    </div>
+
+                    <div class="uncertainty-box">
+                        <span style="color: var(--text-secondary);">Model Uncertainty:</span>
+                        <strong id="uncertainty-display" style="font-family: var(--font-mono); color: #38bdf8;">-- % (LOW)</strong>
+                    </div>
+
+                    <div>
+                        <span style="font-size: 0.72rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; display: block; margin-bottom: 8px;">Key Environmental Drivers:</span>
+                        <div class="factor-bars-list" id="factor-bars-container">
+                            <div style="font-size: 0.75rem; color: var(--text-muted);">Calculating risk breakdown...</div>
+                        </div>
+                    </div>
+
+                    <div style="font-size: 0.78rem; line-height: 1.5; color: var(--text-secondary); background: rgba(0,0,0,0.2); padding: 8px 12px; border-radius: 6px;" id="risk-explanation-text">
+                        Evaluating environmental conditions...
+                    </div>
+                </div>
+            </div>
+
+            <!-- Model Evaluation Strip -->
+            <div class="ml-metrics-strip" id="ml-metrics-strip" style="margin-top: 18px;">
+                <span>Model: <strong>Random Forest (100 Trees)</strong></span>
+                <span>• Cross-Validation: <strong>5-Fold Stratified</strong></span>
+                <span id="metric-accuracy-val">Accuracy: <strong>--</strong></span>
+                <span id="metric-recall-val">Recall: <strong>--</strong></span>
+                <span id="metric-roc-val">ROC-AUC: <strong>--</strong></span>
+                <span>• Reliability: <strong style="color: #10b981;">Validated & Tested</strong></span>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+

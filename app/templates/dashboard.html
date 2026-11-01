@@ -1,0 +1,304 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="dashboard-grid">
+    <!-- Row 1: KPI Telemetry Cards -->
+    <div class="metrics-row">
+        <div class="card metric-card">
+            <div class="metric-header">
+                <span class="metric-title">Active Prioritized Incidents</span>
+                <span class="badge badge-primary">Real-time</span>
+            </div>
+            <div class="metric-body">
+                <span class="metric-value" id="stat-active-incidents">--</span>
+                <span class="metric-change positive">Clustered & Scored</span>
+            </div>
+            <div class="metric-footer">
+                <div class="progress-bar-container">
+                    <div class="progress-bar" style="width: 65%;"></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card metric-card alert-card">
+            <div class="metric-header">
+                <span class="metric-title">Critical Severity</span>
+                <span class="badge badge-danger">Immediate Action</span>
+            </div>
+            <div class="metric-body">
+                <span class="metric-value danger-text" id="stat-critical-incidents">--</span>
+                <span class="metric-change">Priority Score &gt; 80</span>
+            </div>
+            <div class="metric-footer">
+                <div class="progress-bar-container">
+                    <div class="progress-bar danger" style="width: 35%;"></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card metric-card">
+            <div class="metric-header">
+                <span class="metric-title">Satellite Constellations</span>
+                <span class="badge badge-neutral">Public Feeds</span>
+            </div>
+            <div class="metric-body">
+                <span class="metric-value" id="stat-constellations">5</span>
+                <span class="metric-change">FIRMS · S1 · S2 · GPM · NHC</span>
+            </div>
+            <div class="metric-footer">
+                <span class="metric-sublabel">Zero commercial API cost</span>
+            </div>
+        </div>
+
+        <div class="card metric-card">
+            <div class="metric-header">
+                <span class="metric-title">Database Storage</span>
+                <span class="badge badge-success">Local SQLite</span>
+            </div>
+            <div class="metric-body">
+                <span class="metric-value" id="stat-storage">Online</span>
+                <span class="metric-change">WAL Mode Active</span>
+            </div>
+            <div class="metric-footer">
+                <span class="metric-sublabel">Embedded zero-config DB</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Row 2: Geospatial Command Map -->
+    <div class="card map-card">
+        <div class="card-header flex-between">
+            <div class="header-group">
+                <h3 class="card-title">Geospatial Multi-Hazard Incident Map</h3>
+                <span class="card-subtitle">Leaflet.js + OpenStreetMap (Global Coverage)</span>
+            </div>
+            <div class="map-controls">
+                <div class="button-group filter-group">
+                    <button class="filter-btn active" data-filter="ALL">All Hazards</button>
+                    <button class="filter-btn" data-filter="FIRE">Wildfire</button>
+                    <button class="filter-btn" data-filter="FLOOD">Flood</button>
+                    <button class="filter-btn" data-filter="DROUGHT">Drought</button>
+                    <button class="filter-btn" data-filter="CYCLONE">Cyclone</button>
+                </div>
+            </div>
+        </div>
+        <div class="card-body map-wrapper">
+            <div id="disaster-map" class="map-container"></div>
+            
+            <!-- Map Overlay Legend -->
+            <div class="map-legend">
+                <div class="legend-header">Observation Legend</div>
+                <div class="legend-item"><span class="legend-color fire"></span> Wildfire (FIRMS Thermal)</div>
+                <div class="legend-item"><span class="legend-color flood"></span> Flood (Sentinel-1 SAR)</div>
+                <div class="legend-item"><span class="legend-color drought"></span> Drought (Sentinel-2 NDVI)</div>
+                <div class="legend-item"><span class="legend-color cyclone" style="background:#a855f7;"></span> Cyclone (NHC / IMD Tracks)</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Row 2.5: AI Disaster Risk Prediction & Environmental Simulator -->
+    <div class="card risk-prediction-section">
+        <div class="card-header flex-between">
+            <div class="header-group">
+                <h3 class="card-title">AI Environmental Disaster Risk Prediction (Machine Learning)</h3>
+                <span class="card-subtitle">Proactive Random Forest Engine — Environmental Weather & Vegetation Risk Forecasting</span>
+            </div>
+            <div class="header-actions">
+                <span class="badge badge-success" id="ml-model-status-badge">ML Model Validated</span>
+            </div>
+        </div>
+        <div class="card-body">
+            <!-- Grid: Simulator Form on Left, Output & Factor Breakdown on Right -->
+            <div class="risk-grid-container">
+                <!-- Left: Simulator Controls -->
+                <div class="card" style="background: rgba(0,0,0,0.2); border: 1px solid var(--border-subtle); padding: 16px;">
+                    <h4 style="font-size: 0.9rem; margin-bottom: 14px; color: var(--text-primary); display: flex; align-items: center; gap: 8px;">
+                        <span>Environmental Weather Simulator</span>
+                        <small style="color: var(--text-muted); font-size: 0.72rem; font-weight: normal;">(Adjust parameters to predict risk)</small>
+                    </h4>
+                    <form id="fire-risk-form" class="risk-simulator-form" onsubmit="return false;">
+                        <!-- 1-Click Live Weather Auto-Fill -->
+                        <div class="weather-autofill-bar" style="margin-bottom: 14px; background: rgba(56, 189, 248, 0.08); border: 1px solid rgba(56, 189, 248, 0.25); border-radius: 6px; padding: 8px 12px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px;">
+                            <div style="display: flex; align-items: center; gap: 6px;">
+                                <span style="font-size: 0.95rem;">📍</span>
+                                <span style="font-size: 0.78rem; font-weight: 600; color: #38bdf8;">Auto-Fill Live Weather:</span>
+                            </div>
+                            <div style="display: flex; align-items: center; gap: 6px;">
+                                <select class="weather-station-select" style="font-size: 0.75rem; padding: 4px 8px; background: var(--bg-card); color: var(--text-primary); border: 1px solid var(--border-subtle); border-radius: 4px;">
+                                    <option value="">Select Real-time Station...</option>
+                                </select>
+                                <button type="button" class="btn btn-outline weather-sync-btn" style="font-size: 0.72rem; padding: 4px 8px;">Fetch Live</button>
+                            </div>
+                        </div>
+                        <div class="risk-slider-item">
+                            <div class="risk-slider-header">
+                                <span>Surface Temperature</span>
+                                <span class="risk-slider-val" id="val-temp">35.0 °C</span>
+                            </div>
+                            <input type="range" class="risk-range-slider" id="slider-temp" min="15.0" max="45.0" step="0.5" value="35.0">
+                        </div>
+
+                        <div class="risk-slider-item">
+                            <div class="risk-slider-header">
+                                <span>Relative Humidity</span>
+                                <span class="risk-slider-val" id="val-humidity">22.0 %</span>
+                            </div>
+                            <input type="range" class="risk-range-slider" id="slider-humidity" min="10.0" max="95.0" step="1.0" value="22.0">
+                        </div>
+
+                        <div class="risk-slider-item">
+                            <div class="risk-slider-header">
+                                <span>Wind Speed</span>
+                                <span class="risk-slider-val" id="val-wind">26.0 km/h</span>
+                            </div>
+                            <input type="range" class="risk-range-slider" id="slider-wind" min="5.0" max="50.0" step="1.0" value="26.0">
+                        </div>
+
+                        <div class="risk-slider-item">
+                            <div class="risk-slider-header">
+                                <span>Recent 24h Precipitation</span>
+                                <span class="risk-slider-val" id="val-rain">0.0 mm</span>
+                            </div>
+                            <input type="range" class="risk-range-slider" id="slider-rain" min="0.0" max="30.0" step="0.5" value="0.0">
+                        </div>
+
+                        <div class="risk-slider-item">
+                            <div class="risk-slider-header">
+                                <span>Vegetation Dryness (Sentinel-2 NDVI)</span>
+                                <span class="risk-slider-val" id="val-ndvi">0.200 (Dry / Fuel Stressed)</span>
+                            </div>
+                            <input type="range" class="risk-range-slider" id="slider-ndvi" min="0.10" max="0.80" step="0.01" value="0.20">
+                        </div>
+                    </form>
+                </div>
+
+                <!-- Right: Prediction Result & Factor Explanation -->
+                <div class="risk-output-card" id="risk-output-card">
+                    <div class="risk-output-top">
+                        <div>
+                            <span style="font-size: 0.72rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; display: block; margin-bottom: 4px;">Predicted Wildfire Risk</span>
+                            <div class="risk-score-display" id="risk-score-display" style="color: #ef4444;">-- %</div>
+                        </div>
+                        <div class="risk-badge high" id="risk-category-badge">HIGH RISK</div>
+                    </div>
+
+                    <!-- Uncertainty metric -->
+                    <div class="uncertainty-box">
+                        <span style="color: var(--text-secondary);">Model Uncertainty:</span>
+                        <strong id="uncertainty-display" style="font-family: var(--font-mono); color: #38bdf8;">-- % (LOW)</strong>
+                    </div>
+
+                    <!-- Contributing Factors Breakdown -->
+                    <div>
+                        <span style="font-size: 0.72rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; display: block; margin-bottom: 8px;">Key Environmental Drivers:</span>
+                        <div class="factor-bars-list" id="factor-bars-container">
+                            <div style="font-size: 0.75rem; color: var(--text-muted);">Calculating risk breakdown...</div>
+                        </div>
+                    </div>
+
+                    <!-- Plain English Narrative -->
+                    <div style="font-size: 0.78rem; line-height: 1.5; color: var(--text-secondary); background: rgba(0,0,0,0.2); padding: 8px 12px; border-radius: 6px;" id="risk-explanation-text">
+                        Evaluating environmental conditions...
+                    </div>
+                </div>
+            </div>
+
+            <!-- Monitored Wildland Corridors -->
+            <div style="margin-top: 22px;">
+                <h4 style="font-size: 0.84rem; color: var(--text-primary); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 8px;">Monitored Wildland Corridors — Live AI Forecast</h4>
+                <div class="zones-list-grid" id="monitored-zones-container">
+                    <div style="font-size: 0.8rem; color: var(--text-muted);">Loading regional wildland assessments...</div>
+                </div>
+            </div>
+
+            <!-- Model Evaluation Strip -->
+            <div class="ml-metrics-strip" id="ml-metrics-strip">
+                <span>Model: <strong>Random Forest (100 Trees)</strong></span>
+                <span>• Cross-Validation: <strong>5-Fold Stratified</strong></span>
+                <span id="metric-accuracy-val">Accuracy: <strong>--</strong></span>
+                <span id="metric-recall-val">Recall: <strong>--</strong></span>
+                <span id="metric-roc-val">ROC-AUC: <strong>--</strong></span>
+                <span>• Reliability: <strong style="color: #10b981;">Validated & Tested</strong></span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Row 3: Incidents Stream & Open Data Ingestion Status -->
+    <div class="details-split-row">
+        <!-- Incidents List -->
+        <div class="card incidents-card">
+            <div class="card-header flex-between">
+                <div class="header-group">
+                    <h3 class="card-title">Prioritized Incident Stream</h3>
+                    <span class="card-subtitle">Algorithmic scoring combining intensity, confidence & extent</span>
+                </div>
+                <span class="badge badge-info" id="incident-count-badge">Loading...</span>
+            </div>
+            <div class="card-body table-responsive">
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>Incident UID</th>
+                            <th>Hazard</th>
+                            <th>Title & Location</th>
+                            <th>Priority Score</th>
+                            <th>Confidence</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody id="incidents-table-body">
+                        <tr>
+                            <td colspan="6" class="table-loading">Querying local SQLite database...</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Open Data Pipeline Ingestion Status -->
+        <div class="card pipeline-card">
+            <div class="card-header">
+                <h3 class="card-title">Open Satellite Data Ingestion</h3>
+                <span class="card-subtitle">Free & Public Earth Observation Feeds</span>
+            </div>
+            <div class="card-body">
+                <ul class="pipeline-list" id="pipeline-list">
+                    <li class="pipeline-item">
+                        <div class="pipeline-icon fire">FIRMS</div>
+                        <div class="pipeline-info">
+                            <strong>NASA FIRMS</strong>
+                            <p>VIIRS & MODIS active thermal detections</p>
+                        </div>
+                        <span class="badge badge-success">READY</span>
+                    </li>
+                    <li class="pipeline-item">
+                        <div class="pipeline-icon flood">S1</div>
+                        <div class="pipeline-info">
+                            <strong>Copernicus Sentinel-1</strong>
+                            <p>C-Band Synthetic Aperture Radar (SAR)</p>
+                        </div>
+                        <span class="badge badge-success">READY</span>
+                    </li>
+                    <li class="pipeline-item">
+                        <div class="pipeline-icon drought">S2</div>
+                        <div class="pipeline-info">
+                            <strong>Copernicus Sentinel-2</strong>
+                            <p>Multispectral MSI vegetation indices</p>
+                        </div>
+                        <span class="badge badge-success">READY</span>
+                    </li>
+                    <li class="pipeline-item">
+                        <div class="pipeline-icon rain">GPM</div>
+                        <div class="pipeline-info">
+                            <strong>NASA GPM</strong>
+                            <p>Global Precipitation Measurement (IMERG)</p>
+                        </div>
+                        <span class="badge badge-success">READY</span>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+

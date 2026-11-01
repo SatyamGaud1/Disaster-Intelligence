@@ -1,0 +1,278 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="dashboard-grid">
+    <!-- Row 1: Cyclone KPI Telemetry Cards -->
+    <div class="metrics-row">
+        <div class="card metric-card alert-card">
+            <div class="metric-header">
+                <span class="metric-title">Monitored Tropical Cyclones</span>
+                <span class="badge" style="background: rgba(168, 85, 247, 0.2); color: #c084fc;">NOAA NHC &amp; IMD</span>
+            </div>
+            <div class="metric-body">
+                <span class="metric-value" style="color: var(--hazard-cyclone);" id="cyclone-active-count">--</span>
+                <span class="metric-change" id="cyclone-active-label">Active / Surveillance Systems</span>
+            </div>
+            <div class="metric-footer">
+                <span class="metric-sublabel" id="cyclone-basin-label">Arabian Sea &amp; Bay of Bengal</span>
+            </div>
+        </div>
+
+        <div class="card metric-card">
+            <div class="metric-header">
+                <span class="metric-title">Peak Sustained Wind</span>
+                <span class="badge badge-danger" id="cyclone-category-badge">Category --</span>
+            </div>
+            <div class="metric-body">
+                <span class="metric-value danger-text" id="cyclone-peak-wind">-- km/h</span>
+                <span class="metric-change" id="cyclone-wind-knots">-- knots (1-min sustained)</span>
+            </div>
+            <div class="metric-footer">
+                <span class="metric-sublabel" id="cyclone-imd-scale-label">IMD Scale: --</span>
+            </div>
+        </div>
+
+        <div class="card metric-card">
+            <div class="metric-header">
+                <span class="metric-title">Central Barometric Pressure</span>
+                <span class="badge badge-primary">Barometric Eye</span>
+            </div>
+            <div class="metric-body">
+                <span class="metric-value" id="cyclone-min-pressure">-- hPa</span>
+                <span class="metric-change" id="cyclone-trend-label">Pressure Trend: --</span>
+            </div>
+            <div class="metric-footer">
+                <span class="metric-sublabel">Core Vortex Intensity</span>
+            </div>
+        </div>
+
+        <div class="card metric-card">
+            <div class="metric-header">
+                <span class="metric-title">Nearest Coastal Proximity</span>
+                <span class="badge badge-warning">Landfall Watch</span>
+            </div>
+            <div class="metric-body">
+                <span class="metric-value" id="cyclone-coast-dist">-- km</span>
+                <span class="metric-change" id="cyclone-coast-target">Coast: --</span>
+            </div>
+            <div class="metric-footer">
+                <span class="metric-sublabel" id="cyclone-forward-speed">Forward Speed: -- km/h</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Row 2: Live Cyclone Tracking & Track Visualizer Map -->
+    <div class="card map-card">
+        <div class="card-header flex-between">
+            <div class="header-group">
+                <h3 class="card-title">Live Cyclone Tracking &amp; Official Forecast Cone Map</h3>
+                <span class="card-subtitle">Observed track points vs official agency forecast vectors with NHC/IMD cone of uncertainty</span>
+            </div>
+            <div class="map-controls">
+                <label for="cyclone-select" style="font-size: 0.8rem; color: var(--text-secondary); margin-right: 6px;">Select System:</label>
+                <select id="cyclone-select" class="filter-btn" style="background: var(--bg-card); color: var(--text-primary); border: 1px solid var(--border-subtle); padding: 5px 10px; border-radius: 4px;">
+                    <option value="2023-ARB-BIPARJOY">Cyclone Biparjoy (Arabian Sea / Gujarat)</option>
+                    <option value="2020-NIO-AMPHAN">Super Cyclone Amphan (Bay of Bengal / WB)</option>
+                    <option value="2022-AL09-IAN">Major Hurricane Ian (Gulf / Florida)</option>
+                </select>
+                <button class="btn btn-outline" id="refresh-cyclone-data-btn" style="margin-left: 10px;">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/></svg>
+                    <span>Sync Agency Feeds</span>
+                </button>
+            </div>
+        </div>
+        <div class="card-body map-wrapper">
+            <div id="disaster-map" class="map-container"></div>
+            
+            <div class="map-legend">
+                <div class="legend-header">Track &amp; Hazard Visualizer</div>
+                <div class="legend-item"><span class="legend-color" style="background:#a855f7;"></span> Observed Historical Eye Positions (Solid)</div>
+                <div class="legend-item"><span class="legend-color" style="background:#38bdf8; border: 1px dashed #fff;"></span> Official Forecast Track (Dashed Vector)</div>
+                <div class="legend-item"><span class="legend-color" style="background:rgba(56, 189, 248, 0.25); border: 1px dotted #38bdf8;"></span> Official Forecast Uncertainty Cone</div>
+                <div class="legend-item"><span class="legend-color" style="background:rgba(239, 68, 68, 0.2); border: 1px solid #ef4444;"></span> Hurricane / Gale Wind Radius (118+ km/h)</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Row 3: Official Bulletins & Coastal Impact Information -->
+    <div class="details-split-row">
+        <!-- Official Alerts Feed -->
+        <div class="card incidents-card">
+            <div class="card-header flex-between">
+                <div class="header-group">
+                    <h3 class="card-title">Official Agency Bulletins &amp; Cyclone Warnings</h3>
+                    <span class="card-subtitle">Verified warnings from IMD RSMC New Delhi and NOAA NHC</span>
+                </div>
+                <span class="badge" style="background: rgba(168, 85, 247, 0.15); color: #c084fc;">Official Advisories</span>
+            </div>
+            <div class="card-body" style="padding: 0; max-height: 380px; overflow-y: auto;">
+                <div id="cyclone-advisories-list">
+                    <div style="padding: 16px; color: var(--text-muted); font-size: 0.85rem;">Loading official agency advisories...</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Landfall & Impact Assessment -->
+        <div class="card evidence-card">
+            <div class="card-header flex-between">
+                <div class="header-group">
+                    <h3 class="card-title">Landfall &amp; Coastal Impact Assessment</h3>
+                    <span class="card-subtitle">Proximity-based coastal risk and surge warnings</span>
+                </div>
+                <span class="badge badge-warning" id="cyclone-impact-badge">SURGE WATCH</span>
+            </div>
+            <div class="card-body">
+                <div id="cyclone-impact-container" style="display: flex; flex-direction: column; gap: 14px;">
+                    <div style="background: rgba(0,0,0,0.25); padding: 12px; border-radius: 6px; border: 1px solid var(--border-subtle);">
+                        <div style="font-size: 0.72rem; color: var(--text-muted); text-transform: uppercase;">Estimated Landfall Sector</div>
+                        <div style="font-size: 1.05rem; font-weight: 600; color: var(--text-primary); margin-top: 4px;" id="cyclone-impact-sector">Saurashtra &amp; Kutch Coast (Gujarat, India)</div>
+                        <div style="font-size: 0.78rem; color: var(--text-secondary); margin-top: 2px;" id="cyclone-impact-timing">Estimated window: Commencing within 12 - 18 hours</div>
+                    </div>
+
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                        <div style="background: rgba(239, 68, 68, 0.08); border: 1px solid rgba(239, 68, 68, 0.25); padding: 10px; border-radius: 6px;">
+                            <div style="font-size: 0.7rem; color: #f87171; text-transform: uppercase; font-weight: 600;">Storm Surge Warning</div>
+                            <div style="font-size: 0.85rem; color: var(--text-primary); margin-top: 4px;" id="cyclone-surge-text">2.5 - 3.5 m astronomical tidal surge inundating low-lying littoral regions.</div>
+                        </div>
+                        <div style="background: rgba(56, 189, 248, 0.08); border: 1px solid rgba(56, 189, 248, 0.25); padding: 10px; border-radius: 6px;">
+                            <div style="font-size: 0.7rem; color: #38bdf8; text-transform: uppercase; font-weight: 600;">Heavy Rainfall Warning</div>
+                            <div style="font-size: 0.85rem; color: var(--text-primary); margin-top: 4px;" id="cyclone-rainfall-warning">Extremely heavy rainfall (&gt;200 mm/24h) triggering flash flooding.</div>
+                        </div>
+                    </div>
+
+                    <div style="font-size: 0.75rem; color: var(--text-muted); line-height: 1.4; border-top: 1px solid var(--border-subtle); padding-top: 10px;">
+                        <em>Notice:</em> Landfall forecasts represent official agency projections. Never navigate into storm cones.
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Row 4: AI Environmental Cyclone Risk Simulator (Machine Learning) -->
+    <div class="card risk-prediction-section" style="margin-top: 24px;">
+        <div class="card-header flex-between">
+            <div class="header-group">
+                <h3 class="card-title">AI Environmental Cyclone Risk Simulator (Machine Learning)</h3>
+                <span class="card-subtitle">Random Forest Multi-Factor Model (Trained on IBTrACS &amp; IMD Atmospheric Standards: Pressure, Wind, SST, Forward Speed &amp; Coastal Distance)</span>
+            </div>
+            <span class="badge badge-success">Cyclone Model Validated</span>
+        </div>
+        <div class="card-body">
+            <div class="risk-grid-container">
+                <!-- Left: Simulator Controls -->
+                <div class="card" style="background: rgba(0,0,0,0.2); border: 1px solid var(--border-subtle); padding: 16px;">
+                    <h4 style="font-size: 0.9rem; margin-bottom: 14px; color: var(--text-primary);">Meteorological &amp; Oceanographic Simulator</h4>
+                    <form id="cyclone-risk-form" class="risk-simulator-form" onsubmit="return false;">
+                        <!-- 1-Click Live Weather Auto-Fill -->
+                        <div class="weather-autofill-bar" style="margin-bottom: 14px; background: rgba(56, 189, 248, 0.08); border: 1px solid rgba(56, 189, 248, 0.25); border-radius: 6px; padding: 8px 12px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px;">
+                            <div style="display: flex; align-items: center; gap: 6px;">
+                                <span style="font-size: 0.95rem;">📍</span>
+                                <span style="font-size: 0.78rem; font-weight: 600; color: #38bdf8;">Auto-Fill Live Weather:</span>
+                            </div>
+                            <div style="display: flex; align-items: center; gap: 6px;">
+                                <select class="weather-station-select" style="font-size: 0.75rem; padding: 4px 8px; background: var(--bg-card); color: var(--text-primary); border: 1px solid var(--border-subtle); border-radius: 4px;">
+                                    <option value="">Select Real-time Station...</option>
+                                </select>
+                                <button type="button" class="btn btn-outline weather-sync-btn" style="font-size: 0.72rem; padding: 4px 8px;">Fetch Live</button>
+                            </div>
+                        </div>
+                        <div class="risk-slider-item">
+                            <div class="risk-slider-header">
+                                <span>Central Barometric Pressure</span>
+                                <span class="risk-slider-val" id="cyclone-val-pressure">945.0 hPa</span>
+                            </div>
+                            <input type="range" class="risk-range-slider" id="cyclone-slider-pressure" min="890.0" max="1015.0" step="1.0" value="945.0">
+                        </div>
+
+                        <div class="risk-slider-item">
+                            <div class="risk-slider-header">
+                                <span>Max Sustained Wind Speed</span>
+                                <span class="risk-slider-val" id="cyclone-val-wind">165.0 km/h</span>
+                            </div>
+                            <input type="range" class="risk-range-slider" id="cyclone-slider-wind" min="40.0" max="290.0" step="2.0" value="165.0">
+                        </div>
+
+                        <div class="risk-slider-item">
+                            <div class="risk-slider-header">
+                                <span>Sea Surface Temperature (SST)</span>
+                                <span class="risk-slider-val" id="cyclone-val-sst">29.8 °C</span>
+                            </div>
+                            <input type="range" class="risk-range-slider" id="cyclone-slider-sst" min="24.0" max="32.5" step="0.2" value="29.8">
+                        </div>
+
+                        <div class="risk-slider-item">
+                            <div class="risk-slider-header">
+                                <span>Storm Forward Translation Speed</span>
+                                <span class="risk-slider-val" id="cyclone-val-speed">14.0 km/h</span>
+                            </div>
+                            <input type="range" class="risk-range-slider" id="cyclone-slider-speed" min="5.0" max="55.0" step="1.0" value="14.0">
+                        </div>
+
+                        <div class="risk-slider-item">
+                            <div class="risk-slider-header">
+                                <span>Distance to Nearest Coastline</span>
+                                <span class="risk-slider-val" id="cyclone-val-dist">45.0 km</span>
+                            </div>
+                            <input type="range" class="risk-range-slider" id="cyclone-slider-dist" min="0.0" max="500.0" step="5.0" value="45.0">
+                        </div>
+                    </form>
+                </div>
+
+                <!-- Right: Risk Output & Factors Breakdown -->
+                <div class="risk-output-card" id="cyclone-risk-output-card">
+                    <div class="risk-output-top">
+                        <div>
+                            <span style="font-size: 0.72rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; display: block; margin-bottom: 4px;">Predicted Coastal Cyclone Risk</span>
+                            <div class="risk-score-display" id="cyclone-risk-score-display" style="color: #ef4444;">-- %</div>
+                        </div>
+                        <div class="risk-badge high" id="cyclone-risk-category-badge">HIGH RISK</div>
+                    </div>
+
+                    <div style="background: rgba(168, 85, 247, 0.1); border: 1px solid rgba(168, 85, 247, 0.3); border-radius: 6px; padding: 8px 12px; margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center;">
+                        <span style="font-size: 0.75rem; color: #c084fc;">Intensity Classifications:</span>
+                        <div style="text-align: right;">
+                            <div id="cyclone-saffir-output" style="font-size: 0.78rem; font-weight: 600; color: #fff;">--</div>
+                            <div id="cyclone-imd-output" style="font-size: 0.72rem; color: #e9d5ff;">--</div>
+                        </div>
+                    </div>
+
+                    <div class="uncertainty-box">
+                        <span style="color: var(--text-secondary);">Model Uncertainty:</span>
+                        <strong id="cyclone-uncertainty-display" style="font-family: var(--font-mono); color: #38bdf8;">-- % (LOW)</strong>
+                    </div>
+
+                    <div>
+                        <span style="font-size: 0.72rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; display: block; margin-bottom: 8px;">Key Atmospheric Drivers:</span>
+                        <div class="factor-bars-list" id="cyclone-factor-bars-container">
+                            <div style="font-size: 0.75rem; color: var(--text-muted);">Calculating cyclone risk breakdown...</div>
+                        </div>
+                    </div>
+
+                    <div style="font-size: 0.78rem; line-height: 1.5; color: var(--text-secondary); background: rgba(0,0,0,0.2); padding: 8px 12px; border-radius: 6px;" id="cyclone-risk-explanation-text">
+                        Evaluating barometric and oceanic indicators...
+                    </div>
+                </div>
+            </div>
+
+            <!-- Monitored Maritime & Coastal Basins Forecast -->
+            <div style="margin-top: 22px;">
+                <h4 style="font-size: 0.84rem; color: var(--text-primary); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 8px;">Monitored Maritime &amp; Coastal Basins — Live AI Forecast</h4>
+                <div class="zones-list-grid" id="monitored-cyclone-zones-container">
+                    <div style="font-size: 0.8rem; color: var(--text-muted);">Loading coastal sector assessments...</div>
+                </div>
+            </div>
+
+            <!-- Model Evaluation Strip -->
+            <div class="ml-metrics-strip" id="cyclone-ml-metrics-strip" style="margin-top: 18px;">
+                <span>Model: <strong>Random Forest (100 Trees)</strong></span>
+                <span>• Cross-Validation: <strong>5-Fold Stratified</strong></span>
+                <span id="cyclone-metric-accuracy-val">Accuracy: <strong>--</strong></span>
+                <span id="cyclone-metric-recall-val">Recall: <strong>--</strong></span>
+                <span id="cyclone-metric-roc-val">ROC-AUC: <strong>--</strong></span>
+                <span>• Reliability: <strong style="color: #10b981;">Validated &amp; Tested</strong></span>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+

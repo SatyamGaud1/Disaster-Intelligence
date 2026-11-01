@@ -1,0 +1,62 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="dashboard-grid">
+    <div class="card" style="padding: 32px; max-width: 1000px; margin: 0 auto;">
+        <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-subtle); padding-bottom: 16px; margin-bottom: 24px;">
+            <div>
+                <span class="badge" style="background: rgba(16, 185, 129, 0.2); color: #10b981; margin-bottom: 8px;">Hackathon Presentation</span>
+                <h2 style="color: var(--text-primary); font-size: 1.5rem; margin: 4px 0;">Disaster Intelligence Platform</h2>
+                <p style="color: var(--text-secondary); font-size: 0.85rem;">Satellite-Based Multi-Hazard Monitoring, Incident Prioritization &amp; Emergency Response Platform</p>
+            </div>
+            <div style="text-align: right;">
+                <span class="badge badge-primary">Version 2.0</span>
+            </div>
+        </div>
+
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 18px; margin-bottom: 24px;">
+            <div class="card" style="background: rgba(0,0,0,0.25); border: 1px solid var(--border-subtle); padding: 18px;">
+                <h4 style="color: #ff4d4f; font-size: 0.95rem; margin-bottom: 8px;">🔥 Forest Fire Monitor</h4>
+                <p style="font-size: 0.8rem; color: var(--text-secondary); line-height: 1.4;">
+                    Active thermal anomaly detection via NASA FIRMS (VIIRS/MODIS), spatial DBSCAN clustering, and Random Forest risk estimation.
+                </p>
+            </div>
+            <div class="card" style="background: rgba(0,0,0,0.25); border: 1px solid var(--border-subtle); padding: 18px;">
+                <h4 style="color: #00d2ff; font-size: 0.95rem; margin-bottom: 8px;">🌊 Flood Inundation Monitor</h4>
+                <p style="font-size: 0.8rem; color: var(--text-secondary); line-height: 1.4;">
+                    Copernicus Sentinel-1 C-band SAR backscatter drop detection coupled with NASA GPM IMERG 24h precipitation feeds.
+                </p>
+            </div>
+            <div class="card" style="background: rgba(0,0,0,0.25); border: 1px solid var(--border-subtle); padding: 18px;">
+                <h4 style="color: #faad14; font-size: 0.95rem; margin-bottom: 8px;">🌾 Drought &amp; Crop Stress</h4>
+                <p style="font-size: 0.8rem; color: var(--text-secondary); line-height: 1.4;">
+                    Copernicus Sentinel-2 MSI multispectral NDVI tracking, soil temperature anomalies, and precipitation deficit modeling.
+                </p>
+            </div>
+            <div class="card" style="background: rgba(0,0,0,0.25); border: 1px solid var(--border-subtle); padding: 18px;">
+                <h4 style="color: #a855f7; font-size: 0.95rem; margin-bottom: 8px;">🌀 Tropical Cyclone Tracking</h4>
+                <p style="font-size: 0.8rem; color: var(--text-secondary); line-height: 1.4;">
+                    NOAA NHC &amp; IMD RSMC track surveillance, historical vs forecast cone of uncertainty, and Saffir-Simpson &amp; IMD classifications.
+                </p>
+            </div>
+            <div class="card" style="background: rgba(0,0,0,0.25); border: 1px solid var(--border-subtle); padding: 18px; grid-column: 1 / -1;">
+                <h4 style="color: #10b981; font-size: 0.95rem; margin-bottom: 8px;">🚑 Emergency Response &amp; Helping Organization Tracking</h4>
+                <p style="font-size: 0.8rem; color: var(--text-secondary); line-height: 1.4;">
+                    Automated nearest organization lookup using Haversine spherical math across 8 agency categories (NDRF, SDRF, Fire, Hospitals, Ambulance, NGOs, Relief, Rescue). Complete 9-stage lifecycle tracking from Pending to Completed with audit trails and dedicated responder portal.
+                </p>
+            </div>
+        </div>
+
+        <div style="background: rgba(16, 185, 129, 0.08); border: 1px solid rgba(16, 185, 129, 0.25); padding: 16px; border-radius: 8px;">
+            <h4 style="color: #10b981; font-size: 0.9rem; margin-bottom: 8px;">System Architecture Highlights</h4>
+            <ul style="font-size: 0.8rem; color: var(--text-secondary); line-height: 1.6; padding-left: 20px;">
+                <li><strong>Backend:</strong> Python 3.11, Flask application factory, SQLite with WAL mode &amp; foreign key constraints.</li>
+                <li><strong>Frontend:</strong> Leaflet.js interactive maps, vanilla JavaScript, dark navy command-center styling.</li>
+                <li><strong>Machine Learning:</strong> Scikit-learn Random Forest multi-factor risk models with cross-validation.</li>
+                <li><strong>Zero Paid APIs:</strong> 100% free, public, and open scientific data standards.</li>
+            </ul>
+        </div>
+    </div>
+</div>
+{% endblock %}
+

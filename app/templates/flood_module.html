@@ -1,0 +1,259 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="dashboard-grid">
+    <!-- Row 1: Flood KPI Telemetry Cards -->
+    <div class="metrics-row">
+        <div class="card metric-card alert-card">
+            <div class="metric-header">
+                <span class="metric-title">Active Inundation Zones</span>
+                <span class="badge badge-info">DBSCAN Clustered</span>
+            </div>
+            <div class="metric-body">
+                <span class="metric-value" style="color: var(--hazard-flood);" id="flood-clusters-count">--</span>
+                <span class="metric-change">Hydrological Basins</span>
+            </div>
+            <div class="metric-footer">
+                <span class="metric-sublabel">Spatial radius: ~12 km</span>
+            </div>
+        </div>
+
+        <div class="card metric-card">
+            <div class="metric-header">
+                <span class="metric-title">Total Inundated Surface</span>
+                <span class="badge badge-primary">SAR Water Extent</span>
+            </div>
+            <div class="metric-body">
+                <span class="metric-value" id="flood-total-area">-- km²</span>
+                <span class="metric-change">Flooded Lowlands</span>
+            </div>
+            <div class="metric-footer">
+                <span class="metric-sublabel">Copernicus Sentinel-1 SAR</span>
+            </div>
+        </div>
+
+        <div class="card metric-card">
+            <div class="metric-header">
+                <span class="metric-title">Peak 24h Precipitation</span>
+                <span class="badge badge-warning">NASA GPM IMERG</span>
+            </div>
+            <div class="metric-body">
+                <span class="metric-value" id="flood-peak-rainfall">-- mm</span>
+                <span class="metric-change">Torrential Rainfall Driver</span>
+            </div>
+            <div class="metric-footer">
+                <span class="metric-sublabel">Precipitation Threshold &gt; 150mm</span>
+            </div>
+        </div>
+
+        <div class="card metric-card">
+            <div class="metric-header">
+                <span class="metric-title">Mean Radar Backscatter Drop</span>
+                <span class="badge badge-neutral">Δσ⁰ Anomaly</span>
+            </div>
+            <div class="metric-body">
+                <span class="metric-value" id="flood-mean-backscatter">-- dB</span>
+                <span class="metric-change">Specular Reflection Index</span>
+            </div>
+            <div class="metric-footer">
+                <span class="metric-sublabel">C-Band SAR Inundation</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Row 2: Flood Geospatial Incident Map -->
+    <div class="card map-card">
+        <div class="card-header flex-between">
+            <div class="header-group">
+                <h3 class="card-title">Copernicus Sentinel-1 SAR Inundation Map</h3>
+                <span class="card-subtitle">C-Band radar surface water change detection with NASA GPM rainfall validation</span>
+            </div>
+            <div class="map-controls">
+                <div class="button-group">
+                    <button class="filter-btn active" id="view-flood-clusters-btn">Inundation Zones</button>
+                    <button class="filter-btn" id="view-raw-sar-btn">Raw SAR Detections</button>
+                </div>
+                <button class="btn btn-outline" id="sync-flood-now-btn" style="margin-left: 10px;">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/></svg>
+                    <span>Sync Sentinel-1 & GPM</span>
+                </button>
+            </div>
+        </div>
+        <div class="card-body map-wrapper">
+            <div id="disaster-map" class="map-container"></div>
+            
+            <div class="map-legend">
+                <div class="legend-header">Inundation Severity (Δσ⁰)</div>
+                <div class="legend-item"><span class="legend-color flood" style="background:#00d2ff;"></span> &gt; 10 dB Drop (Deep Standing Water)</div>
+                <div class="legend-item"><span class="legend-color flood" style="background:#0284c7;"></span> 7 - 10 dB Drop (Shallow Inundation)</div>
+                <div class="legend-item"><span class="legend-color flood" style="background:#38bdf8;"></span> &lt; 7 dB Drop (Saturated Soil)</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Row 3: Transparent Priority Ranking & Evidence Breakdown -->
+    <div class="details-split-row">
+        <!-- Incidents List -->
+        <div class="card incidents-card">
+            <div class="card-header flex-between">
+                <div class="header-group">
+                    <h3 class="card-title">Prioritized Flood Inundation Complexes</h3>
+                    <span class="card-subtitle">Transparent mathematical scoring (35% SAR + 30% GPM Rain + 20% Extent + 15% Conf)</span>
+                </div>
+                <span class="badge badge-info" id="flood-active-badge">Active Inundations</span>
+            </div>
+            <div class="card-body table-responsive">
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>Incident UID</th>
+                            <th>Basin & Incident Title</th>
+                            <th>Priority Score</th>
+                            <th>Radar Drop</th>
+                            <th>Inundated Area</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody id="flood-incidents-table-body">
+                        <tr>
+                            <td colspan="6" class="table-loading">Querying active flood incidents...</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Radar & Hydrological Scientific Evidence Card -->
+        <div class="card pipeline-card">
+            <div class="card-header">
+                <h3 class="card-title">SAR & Precipitation Methodology</h3>
+                <span class="card-subtitle">Physics-Based Earth Observation Analytics</span>
+            </div>
+            <div class="card-body" style="font-size: 0.82rem; color: var(--text-secondary); line-height: 1.6;">
+                <div style="margin-bottom: 16px;">
+                    <strong style="color: var(--text-primary); display:block; margin-bottom: 4px;">1. C-Band SAR Specular Reflection (35%)</strong>
+                    Active radar pulses bounce off smooth standing water like a mirror away from the antenna, causing sharp drops in radar backscatter ($\Delta\sigma^0 \le -8\text{ dB}$).
+                </div>
+                <div style="margin-bottom: 16px;">
+                    <strong style="color: var(--text-primary); display:block; margin-bottom: 4px;">2. NASA GPM Precipitation Driver (30%)</strong>
+                    IMERG dual-frequency precipitation radar and microwave radiometers track 24h accumulated rainfall ($>150\text{ mm}$ indicates catastrophic flood forcing).
+                </div>
+                <div style="margin-bottom: 16px;">
+                    <strong style="color: var(--text-primary); display:block; margin-bottom: 4px;">3. Floodplain Basin Extent (20%)</strong>
+                    DBSCAN spatial clustering groups adjacent flooded radar pixels into connected watershed floodplains using an elliptical spatial envelope.
+                </div>
+                <div>
+                    <strong style="color: var(--text-primary); display:block; margin-bottom: 4px;">4. 24/7 All-Weather Cloud Penetration</strong>
+                    Unlike optical imagery obscured by heavy storm clouds, Sentinel-1 Synthetic Aperture Radar pierces overcast skies day and night.
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Row 4: AI Environmental Flood Risk Simulator & Hydrological Forecaster -->
+    <div class="card risk-prediction-section" style="margin-top: 24px;">
+        <div class="card-header flex-between">
+            <div class="header-group">
+                <h3 class="card-title">AI Environmental Flood Risk Simulator (Machine Learning)</h3>
+                <span class="card-subtitle">Random Forest Multi-Factor Model (Predicting Risk from Rainfall, Soil Moisture, SAR Drop, Elevation & River Proximity)</span>
+            </div>
+            <span class="badge badge-success">Flood Model Validated</span>
+        </div>
+        <div class="card-body">
+            <div class="risk-grid-container">
+                <!-- Left: Simulator Controls -->
+                <div class="card" style="background: rgba(0,0,0,0.2); border: 1px solid var(--border-subtle); padding: 16px;">
+                    <h4 style="font-size: 0.9rem; margin-bottom: 14px; color: var(--text-primary);">Hydrological & Radar Simulator</h4>
+                    <form id="flood-risk-form" class="risk-simulator-form" onsubmit="return false;">
+                        <div class="risk-slider-item">
+                            <div class="risk-slider-header">
+                                <span>24h Precipitation (NASA GPM)</span>
+                                <span class="risk-slider-val" id="flood-val-rain">145.0 mm</span>
+                            </div>
+                            <input type="range" class="risk-range-slider" id="flood-slider-rain" min="0.0" max="250.0" step="1.0" value="145.0">
+                        </div>
+
+                        <div class="risk-slider-item">
+                            <div class="risk-slider-header">
+                                <span>Soil Saturation Moisture</span>
+                                <span class="risk-slider-val" id="flood-val-soil">82.0 %</span>
+                            </div>
+                            <input type="range" class="risk-range-slider" id="flood-slider-soil" min="10.0" max="98.0" step="1.0" value="82.0">
+                        </div>
+
+                        <div class="risk-slider-item">
+                            <div class="risk-slider-header">
+                                <span>Sentinel-1 SAR Drop (Surface Water)</span>
+                                <span class="risk-slider-val" id="flood-val-sar">-10.5 dB</span>
+                            </div>
+                            <input type="range" class="risk-range-slider" id="flood-slider-sar" min="0.5" max="18.0" step="0.5" value="10.5">
+                        </div>
+
+                        <div class="risk-slider-item">
+                            <div class="risk-slider-header">
+                                <span>Terrain Elevation</span>
+                                <span class="risk-slider-val" id="flood-val-elev">35.0 m</span>
+                            </div>
+                            <input type="range" class="risk-range-slider" id="flood-slider-elev" min="5.0" max="400.0" step="5.0" value="35.0">
+                        </div>
+
+                        <div class="risk-slider-item">
+                            <div class="risk-slider-header">
+                                <span>Distance to River Basin</span>
+                                <span class="risk-slider-val" id="flood-val-dist">1.2 km</span>
+                            </div>
+                            <input type="range" class="risk-range-slider" id="flood-slider-dist" min="0.2" max="25.0" step="0.2" value="1.2">
+                        </div>
+                    </form>
+                </div>
+
+                <!-- Right: Risk Output & Factors Breakdown -->
+                <div class="risk-output-card" id="flood-risk-output-card">
+                    <div class="risk-output-top">
+                        <div>
+                            <span style="font-size: 0.72rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; display: block; margin-bottom: 4px;">Predicted Flood Danger</span>
+                            <div class="risk-score-display" id="flood-risk-score-display" style="color: #ef4444;">-- %</div>
+                        </div>
+                        <div class="risk-badge high" id="flood-risk-category-badge">HIGH RISK</div>
+                    </div>
+
+                    <div class="uncertainty-box">
+                        <span style="color: var(--text-secondary);">Model Uncertainty:</span>
+                        <strong id="flood-uncertainty-display" style="font-family: var(--font-mono); color: #38bdf8;">-- % (LOW)</strong>
+                    </div>
+
+                    <div>
+                        <span style="font-size: 0.72rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; display: block; margin-bottom: 8px;">Key Hydrological Drivers:</span>
+                        <div class="factor-bars-list" id="flood-factor-bars-container">
+                            <div style="font-size: 0.75rem; color: var(--text-muted);">Calculating flood risk breakdown...</div>
+                        </div>
+                    </div>
+
+                    <div style="font-size: 0.78rem; line-height: 1.5; color: var(--text-secondary); background: rgba(0,0,0,0.2); padding: 8px 12px; border-radius: 6px;" id="flood-risk-explanation-text">
+                        Evaluating catchment conditions...
+                    </div>
+                </div>
+            </div>
+
+            <!-- Monitored River Basins Forecast -->
+            <div style="margin-top: 22px;">
+                <h4 style="font-size: 0.84rem; color: var(--text-primary); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 8px;">Monitored River Basin Corridors — Live AI Forecast</h4>
+                <div class="zones-list-grid" id="monitored-flood-zones-container">
+                    <div style="font-size: 0.8rem; color: var(--text-muted);">Loading river basin assessments...</div>
+                </div>
+            </div>
+
+            <!-- Model Evaluation Strip -->
+            <div class="ml-metrics-strip" id="flood-ml-metrics-strip" style="margin-top: 18px;">
+                <span>Model: <strong>Random Forest (100 Trees)</strong></span>
+                <span>• Cross-Validation: <strong>5-Fold Stratified</strong></span>
+                <span id="flood-metric-accuracy-val">Accuracy: <strong>--</strong></span>
+                <span id="flood-metric-recall-val">Recall: <strong>--</strong></span>
+                <span id="flood-metric-roc-val">ROC-AUC: <strong>--</strong></span>
+                <span>• Reliability: <strong style="color: #10b981;">Validated & Tested</strong></span>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+

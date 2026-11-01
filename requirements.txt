@@ -1,0 +1,17 @@
+# Disaster Intelligence - Dependencies
+# Flask Backend
+Flask>=3.0.0,<3.1.0
+python-dotenv>=1.0.0,<2.0.0
+
+# Data Processing & Analytics (Phase 2+)
+numpy>=1.26.0
+pandas>=2.2.0
+scikit-learn>=1.4.0
+
+# Testing
+pytest>=8.0.0
+
+# PDF Report Generation & Imaging
+reportlab>=4.0.0
+pillow>=9.0.0
+
